@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from akademik.models import Sekolah
+from akademik.models import Sekolah, Kelas
 
 # User
 class SuperAdmin(models.Model):
@@ -23,9 +23,9 @@ class StaffSekolah(models.Model):
 class Siswa(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     sekolah = models.ForeignKey(Sekolah, on_delete=models.CASCADE)
+    kelas = models.ForeignKey(Kelas, on_delete=models.CASCADE)
     nis = models.CharField(max_length=20, unique=True)
     nama = models.CharField(max_length=255)
-    kelas = models.CharField(max_length=50)
 
 class OrangTua(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
