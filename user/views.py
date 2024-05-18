@@ -12,12 +12,12 @@ from .serializers import (
     LoginSerializer,
     SuperAdminDetailSerializer, AdminSekolahDetailSerializer, 
     StaffSekolahDetailSerializer, SiswaDetailSerializer, OrangTuaDetailSerializer,
-    AdminSekolahRegisterSerializer
 )
 from .permissions import (
     IsSuperAdminOrReadOnly, IsAdminSekolahOrReadOnly, 
     IsStaffSekolahOrReadOnly, IsSiswaOrReadOnly, IsOrangTuaOrReadOnly,
-    IsSuperAdmin, IsAdminSekolah, IsStaffSekolah, IsSiswa, IsOrangTua
+    IsSuperAdmin, IsAdminSekolah, IsStaffSekolah, IsSiswa, IsOrangTua,
+    IsSuperAdminAndAdminSekolahOrReadOnly, IsSuperAdminAndAdminSekolahAndStaffSekolahOrReadOnly
 )
 
 
@@ -39,17 +39,17 @@ class AdminSekolahViewSet(viewsets.ModelViewSet):
 class StaffSekolahViewSet(viewsets.ModelViewSet):
     queryset = StaffSekolah.objects.all()
     serializer_class = StaffSekolahSerializer
-    permission_classes = [IsAuthenticated, IsSuperAdminOrReadOnly, IsAdminSekolahOrReadOnly]
+    permission_classes = [IsAuthenticated, IsSuperAdminAndAdminSekolahOrReadOnly]
 
 class SiswaViewSet(viewsets.ModelViewSet):
     queryset = Siswa.objects.all()
     serializer_class = SiswaSerializer
-    permission_classes = [IsAuthenticated, IsSuperAdminOrReadOnly, IsAdminSekolahOrReadOnly, IsStaffSekolahOrReadOnly]
+    permission_classes = [IsAuthenticated, IsSuperAdminAndAdminSekolahAndStaffSekolahOrReadOnly]
 
 class OrangTuaViewSet(viewsets.ModelViewSet):
     queryset = OrangTua.objects.all()
     serializer_class = OrangTuaSerializer
-    permission_classes = [IsAuthenticated, IsSuperAdminOrReadOnly, IsAdminSekolahOrReadOnly, IsStaffSekolahOrReadOnly]
+    permission_classes = [IsAuthenticated, IsSuperAdminAndAdminSekolahAndStaffSekolahOrReadOnly]
 
 
 # Authentication
@@ -95,9 +95,9 @@ class UserDetailView(APIView):
 #     queryset = SuperAdmin.objects.all()
 #     serializer_class = SuperAdminRegisterSerializer
 
-class AdminSekolahRegisterView(generics.CreateAPIView):
-    queryset = AdminSekolah.objects.all()
-    serializer_class = AdminSekolahRegisterSerializer
+# class AdminSekolahRegisterView(generics.CreateAPIView):
+#     queryset = AdminSekolah.objects.all()
+#     serializer_class = AdminSekolahRegisterSerializer
 
 # class StaffSekolahRegisterView(generics.CreateAPIView):
 #     queryset = StaffSekolah.objects.all()

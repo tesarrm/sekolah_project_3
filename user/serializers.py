@@ -13,25 +13,46 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
 
-# class SuperAdminSerializer(serializers.ModelSerializer):
-#     user = UserSerializer()
+    def update(self, instance, validated_data):
+        instance.username = validated_data.get('username', instance.username)
+        instance.email = validated_data.get('email', instance.email)
+        password = validated_data.get('password')
+        if password:
+            instance.set_password(password)
+        instance.save()
+        return instance
 
-#     class Meta:
-#         model = SuperAdmin
-#         fields = ['user', 'nama']
+class SuperAdminSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
 
-#     def create(self, validated_data):
-#         user_data = validated_data.pop('user')
-#         user = User.objects.create_user(**user_data)
-#         superadmin = SuperAdmin.objects.create(user=user, **validated_data)
-#         return superadmin
+    class Meta:
+        model = SuperAdmin
+        fields = ['id', 'user', 'nama']
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user = User.objects.create_user(**user_data)
+        superadmin = SuperAdmin.objects.create(user=user, **validated_data)
+        return superadmin
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', None)
+        if user_data:
+            user = instance.user
+            user_serializer = UserSerializer(instance=user, data=user_data, partial=True)
+            user_serializer.is_valid(raise_exception=True)
+            user_serializer.save()
+
+        instance.nama = validated_data.get('nama', instance.nama)
+        instance.save()
+        return instance
 
 class AdminSekolahSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
     class Meta:
         model = AdminSekolah
-        fields = ['user', 'sekolah', 'nama', 'no_telp']
+        fields = ['id', 'user', 'sekolah', 'nama', 'no_telp']
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -39,12 +60,26 @@ class AdminSekolahSerializer(serializers.ModelSerializer):
         admin_sekolah = AdminSekolah.objects.create(user=user, **validated_data)
         return admin_sekolah
 
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', None)
+        if user_data:
+            user = instance.user
+            user_serializer = UserSerializer(instance=user, data=user_data, partial=True)
+            user_serializer.is_valid(raise_exception=True)
+            user_serializer.save()
+
+        instance.sekolah = validated_data.get('sekolah', instance.sekolah)
+        instance.nama = validated_data.get('nama', instance.nama)
+        instance.no_telp = validated_data.get('no_telp', instance.no_telp)
+        instance.save()
+        return instance
+
 class StaffSekolahSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
     class Meta:
         model = StaffSekolah
-        fields = ['user', 'sekolah', 'nama', 'jabatan', 'no_telp']
+        fields = ['id', 'user', 'sekolah', 'nama', 'jabatan', 'no_telp']
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -52,12 +87,27 @@ class StaffSekolahSerializer(serializers.ModelSerializer):
         staff_sekolah = StaffSekolah.objects.create(user=user, **validated_data)
         return staff_sekolah
 
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', None)
+        if user_data:
+            user = instance.user
+            user_serializer = UserSerializer(instance=user, data=user_data, partial=True)
+            user_serializer.is_valid(raise_exception=True)
+            user_serializer.save()
+
+        instance.sekolah = validated_data.get('sekolah', instance.sekolah)
+        instance.nama = validated_data.get('nama', instance.nama)
+        instance.jabatan = validated_data.get('jabatan', instance.jabatan)
+        instance.no_telp = validated_data.get('no_telp', instance.no_telp)
+        instance.save()
+        return instance
+
 class SiswaSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
     class Meta:
         model = Siswa
-        fields = ['user', 'sekolah', 'nis', 'nama', 'kelas']
+        fields = ['id', 'user', 'sekolah', 'nis', 'nama', 'kelas']
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -65,18 +115,46 @@ class SiswaSerializer(serializers.ModelSerializer):
         siswa = Siswa.objects.create(user=user, **validated_data)
         return siswa
 
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', None)
+        if user_data:
+            user = instance.user
+            user_serializer = UserSerializer(instance=user, data=user_data, partial=True)
+            user_serializer.is_valid(raise_exception=True)
+            user_serializer.save()
+
+        instance.sekolah = validated_data.get('sekolah', instance.sekolah)
+        instance.nis = validated_data.get('nis', instance.nis)
+        instance.nama = validated_data.get('nama', instance.nama)
+        instance.kelas = validated_data.get('kelas', instance.kelas)
+        instance.save()
+        return instance
+
 class OrangTuaSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
     class Meta:
         model = OrangTua
-        fields = ['user', 'siswa', 'nama']
+        fields = ['id', 'user', 'siswa', 'nama']
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         user = User.objects.create_user(**user_data)
         orang_tua = OrangTua.objects.create(user=user, **validated_data)
         return orang_tua
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', None)
+        if user_data:
+            user = instance.user
+            user_serializer = UserSerializer(instance=user, data=user_data, partial=True)
+            user_serializer.is_valid(raise_exception=True)
+            user_serializer.save()
+
+        instance.siswa = validated_data.get('siswa', instance.siswa)
+        instance.nama = validated_data.get('nama', instance.nama)
+        instance.save()
+        return instance
 
 
 # Authentication 
@@ -164,20 +242,19 @@ class OrangTuaDetailSerializer(serializers.ModelSerializer):
 
 
 ## Register
+# class UserRegisterSerializer(serializers.ModelSerializer):
+#     id = serializers.ReadOnlyField()
 
-class UserRegisterSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField()
+#     class Meta:
+#         model = User
+#         fields = ['id', 'username', 'email', 'password']
+#         extra_kwargs = {'password': {'write_only': True}}
 
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'email', 'password']
-        extra_kwargs = {'password': {'write_only': True}}
+#     def create(self, validated_data):
+#         user = User.objects.create_user(**validated_data)
+#         return user
 
-    def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
-
-# class SuperAdminRegisterSerializer(serializers.ModelSerializer):
+# class SuperAdminSerializer(serializers.ModelSerializer):
 #     user = UserRegisterSerializer()
 
 #     class Meta:
@@ -190,20 +267,38 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 #         superadmin = SuperAdmin.objects.create(user=user, **validated_data)
 #         return superadmin
 
-class AdminSekolahRegisterSerializer(serializers.ModelSerializer):
-    user = UserRegisterSerializer()
+#     def to_representation(self, instance):
+#         representation = super().to_representation(instance)
+#         representation['user'] = {
+#             'id': instance.user.id,
+#             'username': instance.user.username,
+#             'email': instance.user.email
+#         }
+#         return representation
 
-    class Meta:
-        model = AdminSekolah
-        fields = ['user', 'sekolah', 'nama', 'no_telp']
+# class AdminSekolahSerializer(serializers.ModelSerializer):
+#     user = UserRegisterSerializer()
 
-    def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = User.objects.create_user(**user_data)
-        admin_sekolah = AdminSekolah.objects.create(user=user, **validated_data)
-        return admin_sekolah
+#     class Meta:
+#         model = AdminSekolah
+#         fields = ['user', 'sekolah', 'nama', 'no_telp']
 
-# class StaffSekolahRegisterSerializer(serializers.ModelSerializer):
+#     def create(self, validated_data):
+#         user_data = validated_data.pop('user')
+#         user = User.objects.create_user(**user_data)
+#         admin_sekolah = AdminSekolah.objects.create(user=user, **validated_data)
+#         return admin_sekolah
+
+#     def to_representation(self, instance):
+#         representation = super().to_representation(instance)
+#         representation['user'] = {
+#             'id': instance.user.id,
+#             'username': instance.user.username,
+#             'email': instance.user.email
+#         }
+#         return representation
+
+# class StaffSekolahSerializer(serializers.ModelSerializer):
 #     user = UserRegisterSerializer()
 
 #     class Meta:
@@ -216,7 +311,16 @@ class AdminSekolahRegisterSerializer(serializers.ModelSerializer):
 #         staff_sekolah = StaffSekolah.objects.create(user=user, **validated_data)
 #         return staff_sekolah
 
-# class SiswaRegisterSerializer(serializers.ModelSerializer):
+#     def to_representation(self, instance):
+#         representation = super().to_representation(instance)
+#         representation['user'] = {
+#             'id': instance.user.id,
+#             'username': instance.user.username,
+#             'email': instance.user.email
+#         }
+#         return representation
+
+# class SiswaSerializer(serializers.ModelSerializer):
 #     user = UserRegisterSerializer()
 
 #     class Meta:
@@ -229,7 +333,16 @@ class AdminSekolahRegisterSerializer(serializers.ModelSerializer):
 #         siswa = Siswa.objects.create(user=user, **validated_data)
 #         return siswa
 
-# class OrangTuaRegisterSerializer(serializers.ModelSerializer):
+#     def to_representation(self, instance):
+#         representation = super().to_representation(instance)
+#         representation['user'] = {
+#             'id': instance.user.id,
+#             'username': instance.user.username,
+#             'email': instance.user.email
+#         }
+#         return representation
+
+# class OrangTuaSerializer(serializers.ModelSerializer):
 #     user = UserRegisterSerializer()
 
 #     class Meta:
@@ -241,3 +354,12 @@ class AdminSekolahRegisterSerializer(serializers.ModelSerializer):
 #         user = User.objects.create_user(**user_data)
 #         orang_tua = OrangTua.objects.create(user=user, **validated_data)
 #         return orang_tua
+
+#     def to_representation(self, instance):
+#         representation = super().to_representation(instance)
+#         representation['user'] = {
+#             'id': instance.user.id,
+#             'username': instance.user.username,
+#             'email': instance.user.email
+#         }
+#         return representation

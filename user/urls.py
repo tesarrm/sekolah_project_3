@@ -5,7 +5,6 @@ from .views import (
     StaffSekolahViewSet, SiswaViewSet, OrangTuaViewSet,
     LoginView, UserDetailView,
     LogoutView,
-    AdminSekolahRegisterView 
 )
 
 router = DefaultRouter()
@@ -21,7 +20,7 @@ urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('me/', UserDetailView.as_view(), name='me'),
     # path('register/superadmin/', SuperAdminRegisterView.as_view(), name='register-superadmin'),
-    path('register/adminsekolah/', AdminSekolahRegisterView.as_view(), name='register-adminsekolah'),
+    # path('register/adminsekolah/', AdminSekolahRegisterView.as_view(), name='register-adminsekolah'),
     # path('register/staffsekolah/', StaffSekolahRegisterView.as_view(), name='register-staffsekolah'),
     # path('register/siswa/', SiswaRegisterView.as_view(), name='register-siswa'),
     # path('register/orangtua/', OrangTuaRegisterView.as_view(), name='register-orangtua'),
