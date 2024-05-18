@@ -5,7 +5,7 @@ from .views import (
     StaffSekolahViewSet, SiswaViewSet, OrangTuaViewSet,
     LoginView, UserDetailView,LogoutView,
     # AnakViewSet,
-    RegisterAdminSekolahView, TokenNoboxView
+    RegisterAdminSekolahView, TokenNoboxView, AccountListNoboxView
 )
 
 router = DefaultRouter()
@@ -21,5 +21,6 @@ urlpatterns = [
     path('me/', UserDetailView.as_view(), name='me'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('tokennobox/', TokenNoboxView.as_view(), name='token-nobox'),
+    path('accountlistnobox/', AccountListNoboxView.as_view(), name='account-list-nobox'),
     path('register/adminsekolah/', RegisterAdminSekolahView.as_view(), name='register-admin-sekolah'),
 ]

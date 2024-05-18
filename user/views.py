@@ -145,6 +145,21 @@ class TokenNoboxView(views.APIView):
             'nobox_token': nobox_result['Data']
         }, status=status.HTTP_200_OK)
 
+class AccountListNoboxView(views.APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        token_nobox = request.data.get('token_nobox')
+
+        # Inisialisasi Nobox dengan token pengguna
+        nobox = Nobox(token_nobox)
+        account_list_result = nobox.getAccountList()
+
+        if account_list_result['IsError']:
+            return Response({'error': 'Failed to get account list', 'details': account_list_result['Error']}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'accounts': account_list_result['Data']}, status=status.HTTP_200_OK)
+
 class RegisterAdminSekolahView(APIView):
     permission_classes = [AllowAny]
 
