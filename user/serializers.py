@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from .models import SuperAdmin, AdminSekolah, StaffSekolah, Siswa, OrangTua
 from akademik.models import Sekolah
 
+# CRUD
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -157,9 +159,7 @@ class OrangTuaSerializer(serializers.ModelSerializer):
         return instance
 
 
-# Authentication 
-
-## Login
+# Login
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
@@ -183,7 +183,7 @@ class LoginSerializer(serializers.Serializer):
         return data
 
 
-## User detail current login
+# User detail current login
 
 class UserDetailSerializer(serializers.ModelSerializer):
     user_type = serializers.SerializerMethodField()

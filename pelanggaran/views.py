@@ -6,7 +6,6 @@ from user.permissions import IsSuperAdminAndAdminSekolahAndStaffSekolahOrReadOnl
 from rest_framework.permissions import IsAuthenticated
 
 class PelanggaranKategoriViewSet(viewsets.ModelViewSet):
-    queryset = PelanggaranKategori.objects.all()
     serializer_class = PelanggaranKategoriSerializer
     permission_classes = [IsAuthenticated, IsSuperAdminAndAdminSekolahAndStaffSekolahOrReadOnly]
 
@@ -26,7 +25,6 @@ class PelanggaranKategoriViewSet(viewsets.ModelViewSet):
             return PelanggaranKategori.objects.none()
 
 class PelanggaranViewSet(viewsets.ModelViewSet):
-    queryset = Pelanggaran.objects.all()
     serializer_class = PelanggaranSerializer
     permission_classes = [IsAuthenticated, IsSuperAdminAndAdminSekolahAndStaffSekolahOrReadOnly]
 

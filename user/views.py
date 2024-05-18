@@ -121,9 +121,7 @@ class AnakViewSet(APIView):
         except OrangTua.DoesNotExist:
             return Response({"message": "Orang tua tidak ditemukan"}, status=status.HTTP_404_NOT_FOUND)
 
-# Authentication
-
-## Login
+# Login
 
 class LoginView(views.APIView):
     permission_classes = [AllowAny]
@@ -134,7 +132,7 @@ class LoginView(views.APIView):
         token, created = Token.objects.get_or_create(user=user)
         return Response({'token': token.key}, status=status.HTTP_200_OK)
 
-## User detail current login
+# User detail current login
 
 class UserDetailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -156,7 +154,7 @@ class UserDetailView(APIView):
 
         return Response(serializer.data)
 
-## Logout
+# Logout
 
 class LogoutView(views.APIView):
     permission_classes = [IsAuthenticated]
