@@ -1,6 +1,6 @@
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User
-from users.models import Siswa, AdminSekolah, StaffSekolah, SuperAdmin
+from user.models import Siswa, AdminSekolah, StaffSekolah, SuperAdmin
 
 class NISBackend(BaseBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
