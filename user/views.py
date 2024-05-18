@@ -46,7 +46,7 @@ class AdminSekolahViewSet(viewsets.ModelViewSet):
         elif hasattr(user, 'siswa'):
             return AdminSekolah.objects.filter(sekolah=user.siswa.sekolah)
         elif hasattr(user, 'orangtua'):
-            return OrangTua.objects.filter(siswa__sekolah=user.orangtua.siswa.sekolah)
+            return OrangTua.objects.filter(sekolah=user.orangtua.siswa.sekolah)
         else:
             return AdminSekolah.objects.none()
 
@@ -65,7 +65,7 @@ class StaffSekolahViewSet(viewsets.ModelViewSet):
         elif hasattr(user, 'siswa'):
             return StaffSekolah.objects.filter(sekolah=user.siswa.sekolah)
         elif hasattr(user, 'orangtua'):
-            return OrangTua.objects.filter(siswa__sekolah=user.orangtua.siswa.sekolah)
+            return OrangTua.objects.filter(sekolah=user.orangtua.siswa.sekolah)
         else:
             return StaffSekolah.objects.none()
 
@@ -84,7 +84,7 @@ class SiswaViewSet(viewsets.ModelViewSet):
         elif hasattr(user, 'siswa'):
             return Siswa.objects.filter(sekolah=user.siswa.sekolah)
         elif hasattr(user, 'orangtua'):
-            return OrangTua.objects.filter(siswa__sekolah=user.orangtua.siswa.sekolah)
+            return OrangTua.objects.filter(sekolah=user.orangtua.siswa.sekolah)
         else:
             return Siswa.objects.none()
 

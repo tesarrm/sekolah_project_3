@@ -9,12 +9,6 @@ from .views import (
 )
 
 router = DefaultRouter()
-# router.register(r'users', UserViewSet)
-# router.register(r'superadmins', SuperAdminViewSet)
-# router.register(r'adminsekolah', AdminSekolahViewSet)
-# router.register(r'staffsekolah', StaffSekolahViewSet)
-# router.register(r'siswa', SiswaViewSet)
-# router.register(r'orangtua', OrangTuaViewSet)
 router.register(r'adminsekolah', AdminSekolahViewSet, basename='adminsekolah')
 router.register(r'staffsekolah', StaffSekolahViewSet, basename='staffsekolah')
 router.register(r'siswa', SiswaViewSet, basename='siswa')

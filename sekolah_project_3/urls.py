@@ -21,8 +21,10 @@ from rest_framework.authtoken.views import obtain_auth_token
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('user.urls')),
+    path('', include('pelanggaran.urls')),
 ]
 
 # urlpatterns += [
-#     path('api-token-auth/', obtain_auth_token), # Endpoint untuk mendapatkan token
+#     path('api-token-auth/', obtain_auth_token),# Endpoint untuk mendapatkan token
+#     # Tambahkan URL router ke dalam URL patterns Anda
 # ]
