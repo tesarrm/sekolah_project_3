@@ -1,0 +1,111 @@
+// Akademik
+
+CREATE TABLE sekolah (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama VARCHAR(255) NOT NULL,
+    alamat TEXT
+);
+
+CREATE TABLE tingkat (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama VARCHAR(50) NOT NULL,
+    sekolah_id INT NOT NULL,
+    FOREIGN KEY (sekolah_id) REFERENCES sekolah(id)
+);
+
+CREATE TABLE jurusan (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama VARCHAR(50) NOT NULL,
+    sekolah_id INT NOT NULL,
+    FOREIGN KEY (sekolah_id) REFERENCES sekolah(id)
+);
+
+CREATE TABLE kelas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sekolah_id INT NOT NULL,
+    tingkat_id INT NOT NULL,
+    jurusan_id INT NOT NULL,
+    nama VARCHAR(50) NOT NULL,
+    FOREIGN KEY (sekolah_id) REFERENCES sekolah(id) ON DELETE CASCADE,
+    FOREIGN KEY (tingkat_id) REFERENCES tingkat(id),
+    FOREIGN KEY (jurusan_id) REFERENCES jurusan(id)
+);
+
+
+// User
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('superadmin', 'admin_sekolah', 'staff_sekolah', 'siswa', 'orang_tua') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE super_admin (
+    user_id INT PRIMARY KEY,
+    nama VARCHAR(255) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE admin_sekolah (
+    user_id INT PRIMARY KEY,
+    sekolah_id INT NOT NULL,
+    nama VARCHAR(255) NOT NULL,
+    no_telp VARCHAR(20),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (sekolah_id) REFERENCES sekolah(id)
+);
+
+CREATE TABLE staff_sekolah (
+    user_id INT PRIMARY KEY,
+    sekolah_id INT NOT NULL,
+    nama VARCHAR(255) NOT NULL,
+    jabatan VARCHAR(255),
+    no_telp VARCHAR(20),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (sekolah_id) REFERENCES sekolah(id)
+);
+
+CREATE TABLE siswa (
+    user_id INT PRIMARY KEY,
+    sekolah_id INT NOT NULL,
+    nis VARCHAR(20) NOT NULL UNIQUE,
+    nama VARCHAR(255) NOT NULL,
+    kelas VARCHAR(50),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (sekolah_id) REFERENCES sekolah(id)
+);
+
+CREATE TABLE orang_tua (
+    user_id INT PRIMARY KEY,
+    siswa_id INT NOT NULL,
+    nama VARCHAR(255) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (siswa_id) REFERENCES siswa(user_id) ON DELETE CASCADE
+);
+
+
+// Pelanggaran
+
+CREATE TABLE pelanggaran_kategori (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sekolah_id INT NOT NULL,
+    nama VARCHAR(255) NOT NULL,
+    poin INT NOT NULL,
+    catatan TEXT,
+    FOREIGN KEY (sekolah_id) REFERENCES sekolah(id) ON DELETE CASCADE
+);
+
+CREATE TABLE pelanggaran (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sekolah_id INT NOT NULL,
+    staff_sekolah_id INT NOT NULL,
+    siswa_id INT NOT NULL,
+    pelanggaran_kategori_id INT NOT NULL,
+    pesan TEXT,
+    FOREIGN KEY (sekolah_id) REFERENCES sekolah(id) ON DELETE CASCADE,
+    FOREIGN KEY (staff_sekolah_id) REFERENCES staff_sekolah(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (siswa_id) REFERENCES siswa(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (pelanggaran_kategori_id) REFERENCES pelanggaran_kategori(id)
+);
