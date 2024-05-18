@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import SuperAdmin, AdminSekolah, StaffSekolah, Siswa, OrangTua
 from akademik.models import Sekolah
+from django.contrib.auth import authenticate
 
 # CRUD
 
@@ -61,6 +62,16 @@ class AdminSekolahSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**user_data)
         admin_sekolah = AdminSekolah.objects.create(user=user, **validated_data)
         return admin_sekolah
+
+    # def create(self, validated_data):
+    #     user_data = validated_data.pop('user')
+    #     sekolah_data = validated_data.pop('sekolah')
+        
+    #     user = UserSerializer.create(UserSerializer(), validated_data=user_data)
+    #     sekolah = Sekolah.objects.create(**sekolah_data)
+        
+    #     admin_sekolah = AdminSekolah.objects.create(user=user, sekolah=sekolah, **validated_data)
+    #     return admin_sekolah
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', None)
@@ -158,6 +169,40 @@ class OrangTuaSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+# Registration
+
+class AdminSekolahRegistrationUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password')
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
+
+class AdminSekolahRegistrationSekolahSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sekolah
+        fields = ('nama', 'alamat')
+
+class AdminSekolahRegistrationSerializer(serializers.ModelSerializer):
+    user = AdminSekolahRegistrationUserSerializer()
+    sekolah = AdminSekolahRegistrationSekolahSerializer()
+
+    class Meta:
+        model = AdminSekolah
+        fields = ('id', 'user', 'sekolah', 'nama', 'no_telp')
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        sekolah_data = validated_data.pop('sekolah')
+        
+        user = UserSerializer.create(AdminSekolahRegistrationUserSerializer(), validated_data=user_data)
+        sekolah = Sekolah.objects.create(**sekolah_data)
+        
+        admin_sekolah = AdminSekolah.objects.create(user=user, sekolah=sekolah, **validated_data)
+        return admin_sekolah
 
 # Login
 
@@ -182,6 +227,38 @@ class LoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
+# class LoginSerializer(serializers.Serializer):
+#     identifier = serializers.CharField()  # Bisa email atau username
+#     password = serializers.CharField(write_only=True)
+
+#     def validate(self, data):
+#         identifier = data.get('identifier')
+#         password = data.get('password')
+
+#         if identifier and password:
+#             # Cek apakah identifier adalah email atau username
+#             if '@' in identifier:
+#                 email = identifier
+#                 try:
+#                     user = User.objects.get(email=email)
+#                 except User.DoesNotExist:
+#                     # Buat pengguna baru jika tidak ada
+#                     user = User.objects.create_user(username=email, email=email, password=password)
+#             else:
+#                 username = identifier
+#                 try:
+#                     user = User.objects.get(username=username)
+#                 except User.DoesNotExist:
+#                     raise serializers.ValidationError("Invalid login credentials.")
+                
+#             user = authenticate(request=self.context.get('request'), username=user.username, password=password)
+#             if not user:
+#                 raise serializers.ValidationError("Invalid login credentials.")
+#         else:
+#             raise serializers.ValidationError("Must include 'identifier' and 'password'.")
+
+#         data['user'] = user
+#         return data
 
 # User detail current login
 
