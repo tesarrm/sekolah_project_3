@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from .models import SuperAdmin, AdminSekolah, StaffSekolah, Siswa, OrangTua
 from akademik.models import Sekolah
 from django.contrib.auth import authenticate
+from akademik.serializers import KelasSerializer 
 
 # CRUD
 
@@ -116,6 +117,7 @@ class StaffSekolahSerializer(serializers.ModelSerializer):
         return instance
 
 class SiswaSerializer(serializers.ModelSerializer):
+    kelas = KelasSerializer()
     user = UserSerializer()
 
     class Meta:
@@ -184,7 +186,7 @@ class AdminSekolahRegistrationUserSerializer(serializers.ModelSerializer):
 class AdminSekolahRegistrationSekolahSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sekolah
-        fields = ('nama', 'alamat')
+        fields = '__all__'
 
 class AdminSekolahRegistrationSerializer(serializers.ModelSerializer):
     user = AdminSekolahRegistrationUserSerializer()
@@ -192,7 +194,7 @@ class AdminSekolahRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AdminSekolah
-        fields = ('id', 'user', 'sekolah', 'nama', 'no_telp')
+        fields = '__all__' 
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')

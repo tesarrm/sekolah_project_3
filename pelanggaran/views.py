@@ -1,11 +1,13 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from .models import Pelanggaran, PelanggaranKategori
-from .serializers import PelanggaranSerializer, PelanggaranKategoriSerializer
+from .serializers import PelanggaranSerializer, PelanggaranKategoriSerializer, PelanggaranNestedSerializer
 from user.permissions import IsSuperAdminAndAdminSekolahAndStaffSekolahOrReadOnly
 from rest_framework.permissions import IsAuthenticated
 from user.nobox.nobox import Nobox 
 from rest_framework.response import Response
+from django.utils import timezone
+from rest_framework.decorators import action
 
 class PelanggaranKategoriViewSet(viewsets.ModelViewSet):
     serializer_class = PelanggaranKategoriSerializer
@@ -27,7 +29,7 @@ class PelanggaranKategoriViewSet(viewsets.ModelViewSet):
             return PelanggaranKategori.objects.none()
 
 class PelanggaranViewSet(viewsets.ModelViewSet):
-    serializer_class = PelanggaranSerializer
+    serializer_class = PelanggaranNestedSerializer
     permission_classes = [IsAuthenticated, IsSuperAdminAndAdminSekolahAndStaffSekolahOrReadOnly]
 
     def get_queryset(self):
@@ -85,3 +87,47 @@ class PelanggaranViewSet(viewsets.ModelViewSet):
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return PelanggaranSerializer
+        return super().get_serializer_class()
+
+    @action(detail=False, methods=['get'], url_path='today')
+    def get_today_pelanggaran(self, request):
+        today = timezone.now().date()
+        user = self.request.user
+        
+        if hasattr(user, 'superadmin'):
+            queryset = Pelanggaran.objects.filter(created_at__date=today)
+        elif hasattr(user, 'adminsekolah'):
+            queryset = Pelanggaran.objects.filter(sekolah=user.adminsekolah.sekolah, created_at__date=today)
+        elif hasattr(user, 'staffsekolah'):
+            queryset = Pelanggaran.objects.filter(sekolah=user.staffsekolah.sekolah, created_at__date=today)
+        elif hasattr(user, 'siswa'):
+            queryset = Pelanggaran.objects.filter(sekolah=user.siswa.sekolah, created_at__date=today)
+        elif hasattr(user, 'orangtua'):
+            queryset = Pelanggaran.objects.filter(sekolah=user.orangtua.siswa.sekolah, created_at__date=today)
+        else:
+            queryset = Pelanggaran.objects.none()
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='by-kelas/(?P<kelas_id>\d+)')
+    def get_by_kelas(self, request, kelas_id=None):
+        pelanggaran = Pelanggaran.objects.filter(siswa__kelas__id=kelas_id)
+        serializer = self.get_serializer(pelanggaran, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='detail/(?P<kelas_id>\d+)/(?P<pelanggaran_id>\d+)')
+    def detail_by_kelas(self, request, pk=None, kelas_id=None, pelanggaran_id=None):
+        print(kelas_id)
+        print(pelanggaran_id)
+        try:
+            pelanggaran = Pelanggaran.objects.get(id=pelanggaran_id, siswa__kelas__id=kelas_id)
+        except Pelanggaran.DoesNotExist:
+            return Response({'error': 'Pelanggaran not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(pelanggaran)
+        return Response(serializer.data)

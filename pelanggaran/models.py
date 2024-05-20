@@ -18,6 +18,7 @@ class Pelanggaran(models.Model):
     siswa = models.ForeignKey(Siswa, on_delete=models.CASCADE)
     pelanggaran_kategori = models.ForeignKey(PelanggaranKategori, on_delete=models.CASCADE)
     pesan = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
         db_table = 'pelanggaran'
