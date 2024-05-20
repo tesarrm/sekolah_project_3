@@ -9,7 +9,8 @@ from akademik.serializers import SekolahSerializer
 class PelanggaranKategoriSerializer(serializers.ModelSerializer):
     class Meta:
         model = PelanggaranKategori
-        fields = ['id', 'nama', 'poin', 'catatan']
+        # fields = ['id', 'nama', 'poin', 'catatan']
+        fields = '__all__'  
 
 class PelanggaranSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,7 +29,11 @@ class PelanggaranNestedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pelanggaran
-        fields = ['id', 'pesan', 'sekolah', 'staff_sekolah', 'siswa', 'pelanggaran_kategori', 'created_at', 'token_nobox', 'extId', 'accountId', 'body']
+        fields = [
+            'id', 'pesan', 'sekolah', 'staff_sekolah', 'siswa', 
+            'pelanggaran_kategori', 'created_at', 'token_nobox', 
+            'extId', 'accountId', 'body'
+    ]
 
     def get_token_nobox(self, obj):
         return "token_nobox_value"

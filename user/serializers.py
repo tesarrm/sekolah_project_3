@@ -31,7 +31,7 @@ class SuperAdminSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SuperAdmin
-        fields = ['id', 'user', 'nama']
+        fields = '__all__'  
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -56,7 +56,7 @@ class AdminSekolahSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AdminSekolah
-        fields = ['id', 'user', 'sekolah', 'nama', 'no_telp']
+        fields = '__all__'  
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -93,7 +93,7 @@ class StaffSekolahSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StaffSekolah
-        fields = ['id', 'user', 'sekolah', 'nama', 'jabatan', 'no_telp']
+        fields = '__all__'  
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -122,7 +122,7 @@ class SiswaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Siswa
-        fields = ['id', 'user', 'sekolah', 'nis', 'nama', 'kelas']
+        fields = '__all__'  
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -150,7 +150,7 @@ class OrangTuaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrangTua
-        fields = ['id', 'user', 'siswa', 'nama']
+        fields = '__all__'  
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -176,7 +176,7 @@ class OrangTuaSerializer(serializers.ModelSerializer):
 class AdminSekolahRegistrationUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('username', 'email', 'password')
+        fields = '__all__'  
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -269,7 +269,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'user_type']
+        fields = '__all__'  
 
     def get_user_type(self, obj):
         if hasattr(obj, 'superadmin'):
@@ -289,32 +289,32 @@ class SuperAdminDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SuperAdmin
-        fields = ['user', 'nama']
+        fields = '__all__'  
 
 class AdminSekolahDetailSerializer(serializers.ModelSerializer):
     user = UserDetailSerializer()
 
     class Meta:
         model = AdminSekolah
-        fields = ['user', 'sekolah', 'nama', 'no_telp']
+        fields = '__all__'  
 
 class StaffSekolahDetailSerializer(serializers.ModelSerializer):
     user = UserDetailSerializer()
 
     class Meta:
         model = StaffSekolah
-        fields = ['user', 'sekolah', 'nama', 'jabatan', 'no_telp']
+        fields = '__all__'  
 
 class SiswaDetailSerializer(serializers.ModelSerializer):
     user = UserDetailSerializer()
 
     class Meta:
         model = Siswa
-        fields = ['user', 'sekolah', 'nis', 'nama', 'kelas']
+        fields = '__all__'  
 
 class OrangTuaDetailSerializer(serializers.ModelSerializer):
     user = UserDetailSerializer()
 
     class Meta:
         model = OrangTua
-        fields = ['user', 'siswa', 'nama']
+        fields = '__all__'  
