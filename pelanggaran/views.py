@@ -8,6 +8,48 @@ from user.nobox.nobox import Nobox
 from rest_framework.response import Response
 from django.utils import timezone
 from rest_framework.decorators import action
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from rest_framework import status
+from django.forms.models import model_to_dict
+import json
+
+# def send_pelanggaran_email(email, pelanggaran_data):
+#     smtp_server = 'smtp.gmail.com'
+#     smtp_port = 587
+#     sender_email = 'tesarrm58@gmail.com'
+#     password = 'cslulirpurnvnnpw'
+
+#     message = MIMEMultipart()
+#     message['From'] = sender_email
+#     message['To'] = email
+#     message['Subject'] = 'Laporan Pelanggaran'
+
+#     # Membuat isi email berdasarkan data pelanggaran
+#     body = "Berikut adalah laporan pelanggaran:\n\n"
+#     for pelanggaran in pelanggaran_data:
+#         body += f"- ID Pelanggaran: {pelanggaran.id}\n"
+#         body += f"  Waktu: {pelanggaran.created_at}\n"
+#         body += f"  Nama Siswa: {pelanggaran.siswa.nama}\n"
+#         body += f"  Kelas: {pelanggaran.siswa.kelas.nama}\n"
+#         body += f"  Deskripsi: {pelanggaran.deskripsi}\n\n"
+
+#     message.attach(MIMEText(body, 'plain'))
+
+#     try:
+#         server = smtplib.SMTP(smtp_server, smtp_port)
+#         server.starttls()
+#         server.login(sender_email, password)
+#         text = message.as_string()
+#         server.sendmail(sender_email, email, text)
+#         server.quit()
+
+#         return Response({'message': 'Email sent successfully'}, status=status.HTTP_200_OK)
+#     except Exception as e:
+#         print(e)
+#         return Response({'error': 'Failed to send email'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class PelanggaranKategoriViewSet(viewsets.ModelViewSet):
     serializer_class = PelanggaranKategoriSerializer
@@ -15,6 +57,8 @@ class PelanggaranKategoriViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+
+
         if hasattr(user, 'superadmin'):
             return PelanggaranKategori.objects.all()
         elif hasattr(user, 'adminsekolah'):
@@ -27,6 +71,67 @@ class PelanggaranKategoriViewSet(viewsets.ModelViewSet):
             return PelanggaranKategori.objects.filter(sekolah=user.orangtua.siswa.sekolah)
         else:
             return PelanggaranKategori.objects.none()
+
+def send_pelanggaran_email(email, pelanggaran_data):
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = 587
+    sender_email = 'tesarrm58@gmail.com'
+    password = 'cslulirpurnvnnpw'
+
+    message = MIMEMultipart()
+    message['From'] = sender_email
+    message['To'] = email
+    message['Subject'] = 'Laporan Pelanggaran'
+
+    # Membuat isi email berdasarkan data pelanggaran
+    body = "Berikut adalah laporan pelanggaran:\n\n"
+    for pelanggaran in pelanggaran_data:
+        body += f"  Waktu: {pelanggaran.created_at}\n"
+        body += f"  Nama Siswa: {pelanggaran.siswa.nama}\n"
+        body += f"  Kelas: {pelanggaran.siswa.kelas.nama}\n"
+        # body += f"  Deskripsi: {pelanggaran.deskripsi}\n\n"
+
+    message.attach(MIMEText(body, 'plain'))
+
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(sender_email, password)
+        text = message.as_string()
+        server.sendmail(sender_email, email, text)
+        server.quit()
+
+        return Response({'message': 'Email sent successfully'}, status=status.HTTP_200_OK)
+    except Exception as e:
+        print(e)
+        return Response({'error': 'Failed to send email'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+def send_nobox_message(request, pelanggaran):
+    token_nobox = request.data.get('token_nobox')
+    nobox = Nobox(token_nobox)
+    extId = pelanggaran.siswa.orangtua.no_telp
+    channelId = "1"
+
+    sekolah = pelanggaran.sekolah
+    adminsekolah = sekolah.adminsekolah_set.first()
+    if not adminsekolah:
+        return {'IsError': True, 'Error': 'No adminsekolah found for the given school'}
+
+    accountIds = adminsekolah.account_id_nobox
+    bodyType = "1"
+    body = f"Berikut adalah laporan pelanggaran:\n\nWaktu: {pelanggaran.created_at}\nNama Siswa: {pelanggaran.siswa.nama}\nKelas: {pelanggaran.siswa.kelas.nama}\n"
+    attachment = ""
+
+    message_result = nobox.sendInboxMessageExt(
+        extId,
+        channelId,
+        accountIds,
+        bodyType,
+        body,
+        attachment
+    )
+
+    return message_result
 
 class PelanggaranViewSet(viewsets.ModelViewSet):
     serializer_class = PelanggaranNestedSerializer
@@ -47,37 +152,40 @@ class PelanggaranViewSet(viewsets.ModelViewSet):
         else:
             return Pelanggaran.objects.none()
 
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return PelanggaranSerializer
+        return super().get_serializer_class()
+
     def create(self, request, *args, **kwargs):
-        # Buat objek pelanggaran
-        serializer = self.get_serializer(data=request.data)
+        user = self.request.user
+
+        if hasattr(user, 'siswa') or hasattr(user, 'orangtua'):
+            return Response({'error': 'Only staff can create pelanggaran'}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+
+        if hasattr(user, 'superadmin'):
+            data['staff_sekolah'] = user.superadmin.id
+            data['sekolah'] = user.superadmin.sekolah.id
+        if hasattr(user, 'adminsekolah'):
+            data['staff_sekolah'] = user.adminsekolah.id
+            data['sekolah'] = user.adminsekolah.sekolah.id
+        if hasattr(user, 'staffsekolah'):
+            data['staff_sekolah'] = user.staffsekolah.id
+            data['sekolah'] = user.staffsekolah.sekolah.id
+
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
 
-        token_nobox = request.data.get('token_nobox')
-        resextId = request.data.get('extId')
-        resaccountId= request.data.get('accountId')
-        resbody = request.data.get('body')
+        pelanggaran = serializer.save()
 
-        nobox = Nobox(token_nobox)
+        # send email
+        send_pelanggaran_email(email="tesarrm58@gmail.com", pelanggaran_data=[pelanggaran])
 
-        print(token_nobox)
-
-        extId = resextId # nomor tujuan
-        channelId = "1" # 1
-        accountIds = resaccountId # 546785296764933
-        bodyType = "1" # 1 = text
-        body = resbody # isi
-        attachment = ""
-
-        # Kirim pesan menggunakan Nobox
-        message_result = nobox.sendInboxMessageExt(
-            extId, 
-            channelId, 
-            accountIds, 
-            bodyType, 
-            body, 
-            attachment
-        )
+        # send nobox
+        message_result = send_nobox_message(request, pelanggaran)
 
         if message_result['IsError']:
             return Response({
@@ -87,11 +195,7 @@ class PelanggaranViewSet(viewsets.ModelViewSet):
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-    
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return PelanggaranSerializer
-        return super().get_serializer_class()
+
 
     @action(detail=False, methods=['get'], url_path='today')
     def get_today_pelanggaran(self, request):
@@ -131,3 +235,4 @@ class PelanggaranViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(pelanggaran)
         return Response(serializer.data)
+

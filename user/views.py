@@ -293,14 +293,6 @@ def send_otp(email, otp):
         server.sendmail(sender_email, email, text)
         server.quit()
 
-        # Simpan OTP di database
-        # conn = pymysql.connect(host='localhost', user='username', password='password', database='dbname')
-        # cursor = conn.cursor()
-        # sql = "INSERT INTO otp_verification (email, otp) VALUES (%s, %s)"
-        # cursor.execute(sql, (email, otp))
-        # conn.commit()
-        # conn.close()
-
         return True
     except Exception as e:
         print(e)
@@ -317,6 +309,12 @@ class LoginView(APIView):
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
 
+
+        if hasattr(user, 'superadmin'):
+            return Response({
+                'token': token.key,
+            }, status=status.HTTP_200_OK)
+
         # Generate dan kirim OTP ke email pengguna
         otp = generate_otp()
         send_otp(user.email, otp)
@@ -324,6 +322,31 @@ class LoginView(APIView):
         # Simpan OTP di session atau tempat penyimpanan lainnya untuk verifikasi
         request.session['otp'] = otp
         request.session['user_id'] = user.id
+
+        # send otp only staffsekolah
+        if not (hasattr(user, 'staffsekolah') and not user.staffsekolah) :
+            username = request.data.get('username')
+            password = request.data.get('password')
+            nobox = Nobox()
+            nobox_result = nobox.generateToken(username, password)
+
+            # Check for errors during Nobox token generation
+            if nobox_result['IsError']:
+                return Response({'error': 'Failed to generate Nobox token', 'details': nobox_result['Error']}, status=status.HTTP_400_BAD_REQUEST)
+
+            nobox_token = nobox_result['Data']
+
+            # Save nobox_token to admin_sekolah attribute
+            if hasattr(user, 'adminsekolah'):
+                admin_sekolah = user.adminsekolah
+                admin_sekolah.token_nobox = nobox_token
+                admin_sekolah.save()
+
+            # Include Nobox token in response
+            return Response({
+                'token': token.key,
+                'nobox_token': nobox_token
+            }, status=status.HTTP_200_OK)
 
         return Response({'message': 'OTP has been sent to your email'}, status=status.HTTP_200_OK)
 

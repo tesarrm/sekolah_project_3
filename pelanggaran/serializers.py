@@ -16,7 +16,7 @@ class PelanggaranSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pelanggaran
         fields = '__all__'  
-
+    
 class PelanggaranNestedSerializer(serializers.ModelSerializer):
     sekolah = SekolahSerializer()
     staff_sekolah = StaffSekolahSerializer()

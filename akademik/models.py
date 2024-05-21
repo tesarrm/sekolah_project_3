@@ -11,14 +11,20 @@ class Sekolah(models.Model):
     website = models.URLField(max_length=200, blank=True, null=True)  
     catatan = models.TextField(blank=True, null=True)  
 
+# contoh data
+# 1, 2, 3, 4, 5, ....
 class Tingkat(models.Model):
     nama = models.CharField(max_length=50)
     sekolah = models.ForeignKey(Sekolah, on_delete=models.CASCADE)
 
+# contoh data
+# IPA, MTK, IPS, .... 
 class Jurusan(models.Model):
     nama = models.CharField(max_length=50)
     sekolah = models.ForeignKey(Sekolah, on_delete=models.CASCADE)
 
+# contoh data
+# A, B, C, D, .... 
 class Kelas(models.Model):
     nama = models.CharField(max_length=50)
     sekolah = models.ForeignKey(Sekolah, on_delete=models.CASCADE)

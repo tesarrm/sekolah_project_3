@@ -27,6 +27,7 @@ class StaffSekolah(models.Model):
 class OrangTua(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     nama = models.CharField(max_length=255)
+    no_telp = models.TextField(blank=True, null=True) 
 
 class Siswa(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

@@ -7,10 +7,10 @@ from pelanggaran.models import PelanggaranKategori, Pelanggaran
 faker = Faker()
 
 class Command(BaseCommand):
-    help = 'Generate dummy data for Pelanggaran and PelanggaranKategori models'
+    help = 'Generate dummy data for the application'
 
     def handle(self, *args, **kwargs):
-        self.stdout.write("Generating dummy data for Pelanggaran and PelanggaranKategori models...")
+        self.stdout.write("Generating dummy data...")
 
         # Clear existing data
         Pelanggaran.objects.all().delete()
@@ -23,38 +23,27 @@ class Command(BaseCommand):
             return
 
         for sekolah in sekolah_instances:
-            for _ in range(5):
-                PelanggaranKategori.objects.create(
+            pelanggaran_kategori_list= []
+            for pelanggaran_kategori_name in ['Merokok', 'Bolos', 'Mabuk', 'Bertengkar', 'Narkoba']:
+                pelanggaran_kategori = PelanggaranKategori.objects.create(
                     sekolah=sekolah,
-                    nama=faker.word(),
+                    nama=pelanggaran_kategori_name,
                     poin=faker.random_int(min=1, max=10),
                     catatan=faker.text()
                 )
+                pelanggaran_kategori_list.append(pelanggaran_kategori)
 
-        # Create dummy data for Pelanggaran
-        staff_instances = StaffSekolah.objects.all()
-        siswa_instances = Siswa.objects.all()
-        pelanggaran_kategori_instances = PelanggaranKategori.objects.all()
+            # Filter staff and siswa based on the current school
+            staff_instances = StaffSekolah.objects.filter(sekolah=sekolah)
+            siswa_instances = Siswa.objects.filter(sekolah=sekolah)
 
-        if not staff_instances.exists():
-            self.stdout.write(self.style.ERROR('No StaffSekolah instances found. Please create StaffSekolah instances first.'))
-            return
+            for _ in range(20):
+                Pelanggaran.objects.create(
+                    sekolah=sekolah,
+                    staff_sekolah=faker.random_element(staff_instances),
+                    siswa=faker.random_element(siswa_instances),
+                    pelanggaran_kategori=faker.random_element(pelanggaran_kategori_list),
+                    pesan=faker.text()
+                )
 
-        if not siswa_instances.exists():
-            self.stdout.write(self.style.ERROR('No Siswa instances found. Please create Siswa instances first.'))
-            return
-
-        if not pelanggaran_kategori_instances.exists():
-            self.stdout.write(self.style.ERROR('No PelanggaranKategori instances found. Please create PelanggaranKategori instances first.'))
-            return
-
-        for _ in range(20):
-            Pelanggaran.objects.create(
-                sekolah=faker.random_element(sekolah_instances),
-                staff_sekolah=faker.random_element(staff_instances),
-                siswa=faker.random_element(siswa_instances),
-                pelanggaran_kategori=faker.random_element(pelanggaran_kategori_instances),
-                pesan=faker.text()
-            )
-
-        self.stdout.write(self.style.SUCCESS('Successfully generated dummy data for Pelanggaran and PelanggaranKategori models'))
+        self.stdout.write(self.style.SUCCESS('Successfully generated dummy data'))
