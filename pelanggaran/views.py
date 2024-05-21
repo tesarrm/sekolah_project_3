@@ -15,42 +15,6 @@ from rest_framework import status
 from django.forms.models import model_to_dict
 import json
 
-# def send_pelanggaran_email(email, pelanggaran_data):
-#     smtp_server = 'smtp.gmail.com'
-#     smtp_port = 587
-#     sender_email = 'tesarrm58@gmail.com'
-#     password = 'cslulirpurnvnnpw'
-
-#     message = MIMEMultipart()
-#     message['From'] = sender_email
-#     message['To'] = email
-#     message['Subject'] = 'Laporan Pelanggaran'
-
-#     # Membuat isi email berdasarkan data pelanggaran
-#     body = "Berikut adalah laporan pelanggaran:\n\n"
-#     for pelanggaran in pelanggaran_data:
-#         body += f"- ID Pelanggaran: {pelanggaran.id}\n"
-#         body += f"  Waktu: {pelanggaran.created_at}\n"
-#         body += f"  Nama Siswa: {pelanggaran.siswa.nama}\n"
-#         body += f"  Kelas: {pelanggaran.siswa.kelas.nama}\n"
-#         body += f"  Deskripsi: {pelanggaran.deskripsi}\n\n"
-
-#     message.attach(MIMEText(body, 'plain'))
-
-#     try:
-#         server = smtplib.SMTP(smtp_server, smtp_port)
-#         server.starttls()
-#         server.login(sender_email, password)
-#         text = message.as_string()
-#         server.sendmail(sender_email, email, text)
-#         server.quit()
-
-#         return Response({'message': 'Email sent successfully'}, status=status.HTTP_200_OK)
-#     except Exception as e:
-#         print(e)
-#         return Response({'error': 'Failed to send email'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 class PelanggaranKategoriViewSet(viewsets.ModelViewSet):
     serializer_class = PelanggaranKategoriSerializer
     permission_classes = [IsAuthenticated, IsSuperAdminAndAdminSekolahAndStaffSekolahOrReadOnly]
@@ -131,6 +95,12 @@ def send_nobox_message(request, pelanggaran):
         attachment
     )
 
+    if message_result['IsError']:
+        return Response({
+            'error': 'Failed to send message', 
+            'details': message_result['Error']}, 
+            status=status.HTTP_400_BAD_REQUEST)
+
     return message_result
 
 class PelanggaranViewSet(viewsets.ModelViewSet):
@@ -182,16 +152,12 @@ class PelanggaranViewSet(viewsets.ModelViewSet):
         pelanggaran = serializer.save()
 
         # send email
-        send_pelanggaran_email(email="tesarrm58@gmail.com", pelanggaran_data=[pelanggaran])
+        send_pelanggaran_email(email=pelanggaran.siswa.user.email, pelanggaran_data=[pelanggaran])
 
         # send nobox
         message_result = send_nobox_message(request, pelanggaran)
 
-        if message_result['IsError']:
-            return Response({
-                'error': 'Failed to send message', 
-                'details': message_result['Error']}, 
-                status=status.HTTP_400_BAD_REQUEST)
+      
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
