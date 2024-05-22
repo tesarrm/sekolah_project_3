@@ -23,6 +23,7 @@ class StaffSekolah(models.Model):
     no_telp = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(max_length=254, blank=True, null=True) 
     catatan = models.TextField(blank=True, null=True) 
+    otp = models.TextField(blank=True, null=True) 
 
 class OrangTua(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

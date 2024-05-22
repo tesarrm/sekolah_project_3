@@ -9,9 +9,12 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from rest_framework.decorators import action
+from django.forms.models import model_to_dict
 
 from django.contrib.auth.models import User
 from .models import SuperAdmin, AdminSekolah, StaffSekolah, Siswa, OrangTua
+from akademik.models import Kelas 
 from .serializers import (
     UserSerializer, AdminSekolahSerializer, 
     StaffSekolahSerializer, SiswaSerializer, OrangTuaSerializer,
@@ -94,6 +97,17 @@ class SiswaViewSet(viewsets.ModelViewSet):
             return OrangTua.objects.filter(sekolah=user.orangtua.siswa.sekolah)
         else:
             return Siswa.objects.none()
+
+    @action(detail=False, methods=['get'], url_path='by-kelas/(?P<kelas_id>\d+)')
+    def get_siswa_by_kelas(self, request, kelas_id=None):
+        try:
+            kelas = Kelas.objects.get(id=kelas_id)
+        except Kelas.DoesNotExist:
+            return Response({'error': 'Kelas not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        siswa = Siswa.objects.filter(kelas=kelas)
+        serializer = SiswaSerializer(siswa, many=True)
+        return Response(serializer.data)
 
 class OrangTuaViewSet(viewsets.ModelViewSet):
     serializer_class = OrangTuaSerializer
@@ -315,16 +329,8 @@ class LoginView(APIView):
                 'token': token.key,
             }, status=status.HTTP_200_OK)
 
-        # Generate dan kirim OTP ke email pengguna
-        otp = generate_otp()
-        send_otp(user.email, otp)
-
-        # Simpan OTP di session atau tempat penyimpanan lainnya untuk verifikasi
-        request.session['otp'] = otp
-        request.session['user_id'] = user.id
-
         # send otp only staffsekolah
-        if not (hasattr(user, 'staffsekolah') and not user.staffsekolah) :
+        if not (hasattr(user, 'staffsekolah')) :
             username = request.data.get('username')
             password = request.data.get('password')
             nobox = Nobox()
@@ -348,66 +354,45 @@ class LoginView(APIView):
                 'nobox_token': nobox_token
             }, status=status.HTTP_200_OK)
 
+
+        # Generate dan kirim OTP ke email pengguna
+        otp = generate_otp()
+        send_otp(user.email, otp)
+        staffsekolah = user.staffsekolah
+        staffsekolah.otp= otp 
+        staffsekolah.save()
+
         return Response({'message': 'OTP has been sent to your email'}, status=status.HTTP_200_OK)
 
 class OTPVerificationView(APIView):
+  
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        # otp = request.data.get('otp')
-        otp = int(request.data.get('otp'))
-        # user_id = request.session.get('user_id')
-        user_id = request.data.get('user_id')
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
 
-        if not otp or not user_id:
-            return Response({'error': 'OTP and user id are required'}, status=status.HTTP_400_BAD_REQUEST)
+        sekolah = user.staffsekolah.sekolah
+        adminsekolah = sekolah.adminsekolah_set.first()
 
-        # Retrieve user object from user_id
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({'error': 'User not found'}, status=status.HTTP_400_BAD_REQUEST)
+        otp = request.data.get('otp')
 
-        # Retrieve OTP from session
-        # session_otp = request.session.get('otp')
+        print(str(otp) == user.staffsekolah.otp)
+        # print(model_to_dict(user.staffsekolah))
 
-        # print(session_otp)
-
-        if otp:
-            # OTP verification successful, generate token
+        if str(otp) == user.staffsekolah.otp:
             token, created = Token.objects.get_or_create(user=user)
+            token_nobox = adminsekolah.token_nobox
 
-            # Clear session data
-            # del request.session['otp']
-            # del request.session['user_id']
-
-            # Generate token from Nobox if necessary
-            if not (hasattr(user, 'superadmin') and user.superadmin or hasattr(user, 'staffsekolah') and user.staffsekolah or hasattr(user, 'siswa') and user.siswa):
-                username = request.data.get('username')
-                password = request.data.get('password')
-                nobox = Nobox()
-                nobox_result = nobox.generateToken(username, password)
-
-                # Check for errors during Nobox token generation
-                if nobox_result['IsError']:
-                    return Response({'error': 'Failed to generate Nobox token', 'details': nobox_result['Error']}, status=status.HTTP_400_BAD_REQUEST)
-
-                nobox_token = nobox_result['Data']
-
-                # Save nobox_token to admin_sekolah attribute
-                if hasattr(user, 'adminsekolah'):
-                    admin_sekolah = user.adminsekolah
-                    admin_sekolah.token_nobox = nobox_token
-                    admin_sekolah.save()
-
-                # Include Nobox token in response
-                return Response({
-                    'token': token.key,
-                    'nobox_token': nobox_token
-                }, status=status.HTTP_200_OK)
+            # Include Nobox token in response
+            return Response({
+                'token': token.key,
+                'token_nobox': token_nobox 
+            }, status=status.HTTP_200_OK)
 
             # Return token if user doesn't require Nobox token
-            return Response({'token': token.key}, status=status.HTTP_200_OK)
+            # return Response({'token': token.key}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
 

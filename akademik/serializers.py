@@ -18,6 +18,9 @@ class JurusanSerializer(serializers.ModelSerializer):
         fields = '__all__' 
 
 class KelasSerializer(serializers.ModelSerializer):
+    tingkat= TingkatSerializer()
+    jurusan= JurusanSerializer()
+
     class Meta:
         model = Kelas
         fields = '__all__' 
